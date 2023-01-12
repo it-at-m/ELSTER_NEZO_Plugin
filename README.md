@@ -1,5 +1,6 @@
-# KeyCloak (RedHat SSO) ELSTER Plugin
+# Keycloak (RedHat SSO) ELSTER Plugin
 
+Plugin für Keycloak bzw. RH-SSO zur Anbindung des ELSTER Unternehmenskontos / NEZO  (https://mein-unternehmenskonto.de/).
 
 ## Über das Projekt
 
@@ -13,7 +14,7 @@ Da aber die aktuelle Version der kommerziellen Variante RH-SSO 7.6 auf Keycloak 
 (vgl. die [Komponentenliste](https://access.redhat.com/articles/2342881)), wird dort noch zusätzlicher Code
 in Form eines Plugins benötigt.
 
-Das vorliegende Plugin erfüllt diesen Zweck, indem es die komplexen Datentypen in einfache Datentypen
+Das vorliegende Plugin erfüllt diesen Zweck, indem es die komplexen Datentypen in der SAML-Response in einfache Datentypen
 vom Typ String umwandelt, bevor die SAML-Response geparst und verarbeitet wird.
 
 <p align="right">(<a href="#top">nach oben</a>)</p>
@@ -30,7 +31,7 @@ mvn clean install
 
 **Entweder:**
 
-* KeyCloak muss laufen
+* Keycloak muss laufen
 * Folgendes ausführen
 
 ```
@@ -39,8 +40,8 @@ mvn wildfly:deploy
 
 **Oder:** 
 
-Die Datei `elster-authenticator....jar` aus dem Verzeichnis `target` (existiert nach dem Build-Prozess) in das KeyCloak-Verzeichnis 
-`standalone/deployments` kopieren. Erst danach den KeyCloak starten.
+Die Datei `elster-authenticator....jar` aus dem Verzeichnis `target` (existiert nach dem Build-Prozess) in das Keycloak-Verzeichnis 
+`standalone/deployments` kopieren. Erst danach den Keycloak starten.
 
 
 **Immer:**
@@ -72,7 +73,7 @@ Diese ist folgendermaßen zu erreichen:
 
 http://elster.meine-organisation.org/auth/realms/public/account
 
-Falls ELSTER als Default-Provider konfiguriert ist (unter Authentication->Identity Provider Redirector->Actions->Config->Default "elster" eintragen), 
+Falls ELSTER als Default-Provider konfiguriert ist (unter `Authentication->Identity Provider Redirector->Actions->Config->Default` "elster" eintragen), 
 kommt man sofort zur Login-Maske von ELSTER, an sonsten kommt die Login-Maske des Keycloak,
 wo man dann "ELSTER" anklickt (nicht direkt einloggen).
 
@@ -82,12 +83,13 @@ wo man dann "ELSTER" anklickt (nicht direkt einloggen).
 
 Beiträge sind willkommen.
 
-Wenn Sie einen Verbesserungsvorschlag haben, öffnen Sie bitte ein Issue mit dem Tag „enhancement“, forken Sie das Repo und erstellen Sie eine Pull-Anfrage. Sie können auch einfach ein Issue mit dem Stichwort "Verbesserung" eröffnen.
+Wenn Sie einen Verbesserungsvorschlag haben, eröffnen Sie bitte ein Issue mit dem Label "enhancement", forken Sie das Repo 
+und erstellen Sie einen Pull-Request. Sie können auch einfach ein Issue mit dem Stichwort "Verbesserung" eröffnen.
 
-- Öffnen Sie ein Issue mit dem Tag "Verbesserung".
+- Eröffnen Sie ein Issue mit dem Label "enhancement" oder dem Stichwort "Verbesserung".
 - Forken Sie das Projekt
-- Erstellen Sie einen Feature-Zweig (`git checkout -b feature/AmazingFeature`)
-- Bestätigen Sie Ihre Änderungen (`git commit -m 'Add some AmazingFeature'`)
+- Erstellen Sie einen Feature-Branch (`git checkout -b feature/AmazingFeature`)
+- Commiten Sie Ihre Änderungen (`git commit -m 'Add some AmazingFeature'`)
 - Machen Sie einen Push (`git push origin feature/AmazingFeature`)
 - Erstellen Sie einen Pull-Request
 
@@ -95,7 +97,7 @@ Mehr dazu in der Datei [CODE_OF_CONDUCT](/CODE_OF_CONDUCT.md).
 
 <p align="right">(<a href="#top">nach oben</a>)</p>
 
-## License
+## Lizenz
 
 Code steht unter der MIT Lizenz. Siehe [LICENCE](/LICENSE) für mehr Infos.
 
@@ -103,7 +105,7 @@ Code steht unter der MIT Lizenz. Siehe [LICENCE](/LICENSE) für mehr Infos.
 
 
 
-## Contact
+## Kontakt
 
 it@m - opensource@muenchen.de
 
