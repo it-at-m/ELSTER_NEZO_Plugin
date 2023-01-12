@@ -1,0 +1,80 @@
+# This repository adheres to the publiccode.yml standard by including this
+# metadata file that makes public software easily discoverable.
+# More info at https://github.com/italia/publiccode.yml
+
+publiccodeYmlVersion: '0.2'
+name: ELSTER_NEZO-Plugin für Keycloak/RH-SSO
+applicationSuite: Keycloak/RH-SSO-Plugins
+url: 'https://gitlab.opencode.de/landeshauptstadt-muenchen/ELSTER_NEZO_Plugin'
+releaseDate: '2022-12-23'
+softwareVersion: 1.0.2
+developmentStatus: stable
+softwareType: standalone/other
+platforms:
+  - web
+usedBy:
+  - Landeshauptstadt München
+categories:
+  - identity-management
+dependsOn:
+  open:
+    - name: Keycloak
+      versionMin: 15.0.2
+maintenance:
+  type: internal
+  contacts:
+    - name: Roland Werner
+      email: roland.werner@muenchen.de
+      phone: '+491'
+legal:
+  license: MIT
+  mainCopyrightOwner: Landeshauptstadt München
+  repoOwner: Landeshauptstadt München
+intendedAudience:
+  scope:
+    - government
+  countries:
+    - de
+localisation:
+  localisationReady: true
+  availableLanguages:
+    - de
+description:
+  de:
+    genericName: Keycloak/RH-SSO-Plugin
+    documentation: >-
+      https://gitlab.opencode.de/landeshauptstadt-muenchen/ELSTER_NEZO_Plugin/-/blob/main/README.md
+    shortDescription: >-
+      Plugin für Keycloak/RH-SSO zur Anbindung von ELSTER Unternehmenskonto /
+      NEZO
+    longDescription: >2+
+       >  _"Am 7. Februar 2020 gaben das Bayerische Landesamt für Steuern sowie der Senator für Finanzen der freien Hansestadt Bremen bekannt, dass ein Unternehmenskonto auf Basis der ELSTER-Technologie entwickelt werden soll. Das Unternehmenskonto fungiert als Nutzerkonto im Sinne des Onlinezugangsgesetzes (OZG) und dient Organisationen – vor allem Unternehmen – als Zugang zu digitalen Dienstleistungen der Verwaltung. Der IT-Planungsrat beauftragte Bayern und Bremen damit, das Unternehmenskonto für alle Bundesländer auszurollen. Seit Anfang Juni 2021 ist das Unternehmenskonto bei ersten Pilotpartnern im Einsatz. Weitere Partner folgen seitdem sukzessive."_
+
+      Zitat aus
+      [Wikipedia](https://de.wikipedia.org/wiki/Digitales_Unternehmenskonto).
+
+
+      Keycloak in der Version vor 20.0.0 sowie die zum aktuellen Zeitpunkt
+      (Dezember 2022) neueste Version 7.6 vom RedHat Single-Sign-On (RH-SSO) ist
+      nicht geeignet für eine Anbindung an das [ELSTER Unternehmenskonto
+      (NEZO)](https://mein-unternehmenskonto.de/public/#Startseite), da dort in
+      der SAML-Response komplexe, ELSTER-eigene Datentypen verwendet werden.
+
+
+      Ab Keycloak 20.0.0 existiert hierzu ein
+      [Fix](https://github.com/keycloak/keycloak/commit/21f700679f21b71ef89985b835f2d3cf7ac049a0#diff-d619b0a9c091d59cfb785229e2c2b5a4a3d1420eacb25a0ebce4bfee08598548).
+
+      Da aber die aktuelle Version der kommerziellen Variante RH-SSO 7.6 auf
+      Keycloak 18.0.3 basiert (vgl. die
+      [Komponentenliste](https://access.redhat.com/articles/2342881)), wird dort
+      noch zusätzlicher Code in Form eines Plugins benötigt.
+
+
+      Das vorliegende Plugin erfüllt diesen Zweck, indem es die komplexen
+      Datentypen in einfache Datentypen
+
+      vom Typ String umwandelt, bevor die SAML-Response geparst und verarbeitet
+      wird.
+
+    features:
+      - 'Verarbeitung der komplexen, ELSTER-spezifischen Attribute'
