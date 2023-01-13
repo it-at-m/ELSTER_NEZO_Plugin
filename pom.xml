@@ -20,12 +20,6 @@
     <description />
     <modelVersion>4.0.0</modelVersion>
 
-    <parent>
-        <groupId>de.muenchen</groupId>
-        <artifactId>muenchen-pom</artifactId>
-        <version>2.1.0</version>
-    </parent>
-
     <groupId>de.muenchen.keycloak</groupId>
     <artifactId>elster-authenticator</artifactId>
     <version>1.0.2-SNAPSHOT</version>
@@ -42,8 +36,8 @@
     </properties>
 
     <scm>
-        <connection>scm:git:https://git.muenchen.de/auth/buergerkonto-authentication.git</connection>
-        <developerConnection>scm:git:https://git.muenchen.de/auth/buergerkonto-authentication.git</developerConnection>
+        <connection>scm:git:https://git.muenchen.de/ccse/rh-sso-plugins/elster_nezo_plugin.git</connection>
+        <developerConnection>scm:git:https://git.muenchen.de/ccse/rh-sso-plugins/elster_nezo_plugin.git</developerConnection>
     </scm>
 
 
