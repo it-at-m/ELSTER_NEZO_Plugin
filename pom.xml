@@ -17,13 +17,29 @@
   --><project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
     <name>ELSTER Authenticator</name>
-    <description />
+    <description>Keycloak/RH-SSO plugin for connecting the ELSTER Unternehmenskonto (NEZO) SAML identity provider.</description>
+    <url>https://github.com/t12v/keycloak-elster-provider</url>
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>de.muenchen.keycloak</groupId>
     <artifactId>elster-authenticator</artifactId>
     <version>1.0.2-SNAPSHOT</version>
     <packaging>jar</packaging>
+
+    <licenses>
+        <license>
+            <name>MIT License</name>
+            <url>https://github.com/t12v/keycloak-elster-provider/blob/develop/LICENSE</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+
+    <developers>
+        <developer>
+            <name>Roland Werner</name>
+            <organization>Landeshauptstadt München</organization>
+        </developer>
+    </developers>
 
     <properties>
         <maven.compiler.target>1.8</maven.compiler.target>
@@ -33,11 +49,15 @@
         <wildfly.version>6.0.1.Final</wildfly.version>
 <!--        <keycloak.version>16.0.0-SNAPSHOT</keycloak.version>-->
         <keycloak.version>15.1.1</keycloak.version>
+        <junit5.version>5.10.2</junit5.version>
+        <maven-surefire-plugin.version>3.2.5</maven-surefire-plugin.version>
     </properties>
 
     <scm>
-        <connection>scm:git:https://git.muenchen.de/ccse/rh-sso-plugins/elster_nezo_plugin.git</connection>
-        <developerConnection>scm:git:https://git.muenchen.de/ccse/rh-sso-plugins/elster_nezo_plugin.git</developerConnection>
+        <connection>scm:git:https://github.com/t12v/keycloak-elster-provider.git</connection>
+        <developerConnection>scm:git:https://github.com/t12v/keycloak-elster-provider.git</developerConnection>
+        <url>https://github.com/t12v/keycloak-elster-provider</url>
+        <tag>HEAD</tag>
     </scm>
 
 
@@ -88,6 +108,13 @@
             <version>1.70</version>
             <scope>provided</scope>
         </dependency>
+
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>${junit5.version}</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>
@@ -100,6 +127,12 @@
                 <configuration>
                     <skip>false</skip>
                 </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>${maven-surefire-plugin.version}</version>
             </plugin>
 
             <!-- Wird für den Release-Build benötigt -->
@@ -118,4 +151,74 @@
 
         </plugins>
     </build>
+
+    <profiles>
+        <!--
+            Activated explicitly (-Pcentral-publish) by release.yml. Kept out of the default
+            build so normal builds don't sign/javadoc every artifact.
+        -->
+        <profile>
+            <id>central-publish</id>
+            <distributionManagement>
+                <repository>
+                    <id>central</id>
+                    <url>https://central.sonatype.com/api/v1/publisher</url>
+                </repository>
+            </distributionManagement>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-source-plugin</artifactId>
+                        <version>3.3.1</version>
+                        <executions>
+                            <execution>
+                                <id>attach-sources</id>
+                                <goals>
+                                    <goal>jar-no-fork</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-javadoc-plugin</artifactId>
+                        <version>3.6.3</version>
+                        <executions>
+                            <execution>
+                                <id>attach-javadocs</id>
+                                <goals>
+                                    <goal>jar</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-gpg-plugin</artifactId>
+                        <version>3.2.4</version>
+                        <executions>
+                            <execution>
+                                <id>sign-artifacts</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>sign</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.sonatype.central</groupId>
+                        <artifactId>central-publishing-maven-plugin</artifactId>
+                        <version>0.5.0</version>
+                        <extensions>true</extensions>
+                        <configuration>
+                            <publishingServerId>central</publishingServerId>
+                            <autoPublish>false</autoPublish>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 </project>

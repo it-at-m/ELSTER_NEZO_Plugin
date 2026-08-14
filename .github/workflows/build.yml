@@ -37,8 +37,8 @@ jobs:
                     - "21"
 
         steps:
-            -   uses: actions/checkout@v6
-            -   uses: actions/setup-node@v6
+            -   uses: actions/checkout@v7
+            -   uses: actions/setup-node@v7
             -   name: Set up JDK ${{ matrix.java }}
                 uses: actions/setup-java@v5
                 with:
@@ -46,7 +46,7 @@ jobs:
                     java-version: ${{ matrix.java }}
 
             -   name: Cache .m2
-                uses: actions/cache@v5
+                uses: actions/cache@v6
                 with:
                     path: ~/.m2/repository
                     key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
@@ -67,12 +67,158 @@ jobs:
                     truncate_stack_traces: false
                     report_paths: '**/target/*-reports/TEST-*.xml'
 
+    keycloak-version-matrix:
+        name: "Unit tests against Keycloak ${{ matrix.kcVersion }}"
+        runs-on: ubuntu-latest
+        strategy:
+            fail-fast: false
+            matrix:
+                # Legacy WildFly-distribution range this plugin actually targets: the bug it
+                # works around was fixed upstream in Keycloak 20.0.0, and Keycloak removed the
+                # WildFly distribution entirely in 21. 15.1.1 is the current pin; 18.0.2 and
+                # 19.0.3 are later legacy releases still on Maven Central.
+                kcVersion:
+                    - "15.1.1"
+                    - "18.0.2"
+                    - "19.0.3"
+        steps:
+            -   uses: actions/checkout@v7
+            -   name: Set up JDK 17
+                uses: actions/setup-java@v5
+                with:
+                    distribution: "temurin"
+                    java-version: "17"
+
+            -   name: Cache .m2
+                uses: actions/cache@v6
+                with:
+                    path: ~/.m2/repository
+                    key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+                    restore-keys: |
+                        ${{ runner.os }}-maven-
+
+            -   name: Build and test against Keycloak ${{ matrix.kcVersion }}
+                run: |
+                    mvn ${MAVEN_CLI_OPTS} -Dkeycloak.version=${{ matrix.kcVersion }} clean test
+
+            -   name: Publish Test Report
+                uses: mikepenz/action-junit-report@v6
+                if: success() || failure()
+                with:
+                    summary: true
+                    detailed_summary: true
+                    annotate_notice: true
+                    truncate_stack_traces: false
+                    report_paths: '**/target/*-reports/TEST-*.xml'
+
+    end2end:
+        name: "Deploy smoke test on Keycloak ${{ matrix.kcVersion }}"
+        # Verifies the built jar still deploys cleanly and the server boots on a real legacy
+        # (WildFly-distribution) Keycloak per version. This is NOT a functional SAML login test
+        # against ELSTER — that would need a real/mock ELSTER IdP (metadata, signing certs,
+        # encrypted assertions) that isn't available in CI. See CustomSAMLEndpointTest for
+        # coverage of the actual SAML attribute-transform logic.
+        runs-on: ubuntu-latest
+        strategy:
+            fail-fast: false
+            matrix:
+                include:
+                    -   kcVersion: "15.1.1"
+                        image: "quay.io/keycloak/keycloak:15.1.1"
+                    -   kcVersion: "18.0.2"
+                        image: "quay.io/keycloak/keycloak:18.0.2-legacy"
+                    -   kcVersion: "19.0.3"
+                        image: "quay.io/keycloak/keycloak:19.0.3-legacy"
+        steps:
+            -   uses: actions/checkout@v7
+            -   name: Set up JDK 17
+                uses: actions/setup-java@v5
+                with:
+                    distribution: "temurin"
+                    java-version: "17"
+
+            -   name: Cache .m2
+                uses: actions/cache@v6
+                with:
+                    path: ~/.m2/repository
+                    key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+                    restore-keys: |
+                        ${{ runner.os }}-maven-
+
+            -   name: Build plugin jar for Keycloak ${{ matrix.kcVersion }}
+                run: |
+                    mvn ${MAVEN_CLI_OPTS} -Dkeycloak.version=${{ matrix.kcVersion }} clean package -DskipTests
+
+            -   name: Build smoke-test image with the plugin deployed
+                run: |
+                    cat <<'EOF' > Dockerfile.smoke-test
+                    ARG BASE_IMAGE
+                    FROM ${BASE_IMAGE}
+                    COPY target/*.jar /opt/jboss/keycloak/standalone/deployments/
+                    EOF
+                    docker build \
+                        --build-arg BASE_IMAGE=${{ matrix.image }} \
+                        -f Dockerfile.smoke-test \
+                        -t elster-authenticator-smoke-test:${{ matrix.kcVersion }} .
+
+            -   name: Boot Keycloak with the plugin deployed
+                run: |
+                    docker run -d --name kc-smoke-test \
+                        -e KEYCLOAK_USER=admin -e KEYCLOAK_PASSWORD=admin \
+                        -p 8080:8080 \
+                        elster-authenticator-smoke-test:${{ matrix.kcVersion }}
+
+            -   name: Wait for plugin deployment and server readiness
+                run: |
+                    echo "Waiting for the elster-authenticator module to deploy..."
+                    deployed=false
+                    for i in $(seq 1 60); do
+                        if docker logs kc-smoke-test 2>&1 | grep -qi 'deployed "elster-authenticator'; then
+                            deployed=true
+                            break
+                        fi
+                        sleep 5
+                    done
+                    if [ "$deployed" != "true" ]; then
+                        echo "::error::elster-authenticator did not report as deployed within timeout"
+                        docker logs kc-smoke-test
+                        exit 1
+                    fi
+
+                    if docker logs kc-smoke-test 2>&1 | grep -i "elster" | grep -qi "error"; then
+                        echo "::error::Errors were logged while deploying elster-authenticator"
+                        docker logs kc-smoke-test
+                        exit 1
+                    fi
+
+                    echo "Waiting for Keycloak to accept requests..."
+                    for i in $(seq 1 30); do
+                        if curl -sf http://localhost:8080/auth/realms/master/.well-known/openid-configuration > /dev/null; then
+                            echo "Keycloak is up with the plugin deployed."
+                            exit 0
+                        fi
+                        sleep 5
+                    done
+                    echo "::error::Keycloak did not become ready within timeout"
+                    docker logs kc-smoke-test
+                    exit 1
+
+            -   name: Dump container logs
+                if: always()
+                run: docker logs kc-smoke-test || true
+
+            -   name: Teardown
+                if: always()
+                run: docker rm -f kc-smoke-test || true
+
     build-results:
         name: Build results
         if: ${{ always() }}
         runs-on: ubuntu-latest
         needs:
             - build
+            - keycloak-version-matrix
+            - end2end
         steps:
             -   run: exit 1
                 # see https://stackoverflow.com/a/67532120/4907315
